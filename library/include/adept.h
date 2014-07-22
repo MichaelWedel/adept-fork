@@ -50,7 +50,7 @@
 // statements to access; by default this is thread safe but if you
 // know you are running a single-threaded application then slightly
 // faster performance may be achieved by defining this.
-//#define ADEPT_STACK_THREAD_UNSAFE 1
+#define ADEPT_STACK_THREAD_UNSAFE 1
 
 // Define this to check whether the "multiplier" is zero before it is
 // placed on the operation stack. This makes the forward pass slower
@@ -168,6 +168,7 @@
 #define ADEPT_THREAD_LOCAL __thread
 #define ADEPT_RESTRICT __restrict__
 #else
+#include <windows.h> 
 #define ADEPT_SSE2_ALIGNED
 #define ADEPT_THREAD_LOCAL __declspec(thread)
 #define ADEPT_EXPORT_DLL __declspec(dllexport)
@@ -193,7 +194,7 @@ namespace adept {
  
   // Declare a thread-safe and a thread-unsafe global pointer to the
   // current stack
-  class ADEPT_EXPORT_DLL ADEPT_EXPORT_DLL Stack;
+  class ADEPT_EXPORT_DLL Stack;
   extern ADEPT_THREAD_LOCAL Stack* _stack_current_thread;
   extern Stack* _stack_current_thread_unsafe;
 
