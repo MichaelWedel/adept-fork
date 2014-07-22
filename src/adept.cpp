@@ -31,7 +31,7 @@ namespace adept {
   // Global pointers to the current thread, the second of which is
   // thread safe. The first is only used if ADEPT_STACK_THREAD_UNSAFE
   // is defined.
-  __thread Stack* _stack_current_thread = 0;
+  ADEPT_THREAD_LOCAL Stack* _stack_current_thread = 0;
   Stack* _stack_current_thread_unsafe = 0;
 
   // Destructor: frees dynamically allocated memory (if any)
@@ -362,7 +362,7 @@ namespace adept {
 	    // Try to minimize pointer dereferencing by making local
 	    // copies
 	    register Real multiplier = multiplier_[iop];
-	    register Real* __restrict__ gradient_multipass 
+	    register Real* ADEPT_RESTRICT gradient_multipass 
 	      = &(gradient_multipass_[offset_[iop]][0]);
 #if ADEPT_MULTIPASS_SIZE > ADEPT_MULTIPASS_SIZE_ZERO_CHECK
 	    // For large blocks, loop over only the indices
@@ -418,7 +418,7 @@ namespace adept {
 	  for (Offset iop = statement_[ist-1].end_plus_one;
 	       iop < statement.end_plus_one; iop++) {
 	    register Real multiplier = multiplier_[iop];
-	    register Real* __restrict__ gradient_multipass 
+	    register Real* ADEPT_RESTRICT gradient_multipass 
 	      = &(gradient_multipass_[offset_[iop]][0]);
 #if ADEPT_MULTIPASS_SIZE > ADEPT_MULTIPASS_SIZE_ZERO_CHECK
 	    for (Offset i = 0; i < n_non_zero; i++) {
