@@ -31,7 +31,7 @@ namespace adept {
   // Global pointers to the current thread, the second of which is
   // thread safe. The first is only used if ADEPT_STACK_THREAD_UNSAFE
   // is defined.
-  ADEPT_THREAD_LOCAL Stack* _stack_current_thread = 0;
+  Stack* _stack_current_thread = 0;
   Stack* _stack_current_thread_unsafe = 0;
 
   // Destructor: frees dynamically allocated memory (if any)

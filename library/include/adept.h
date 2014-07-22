@@ -50,7 +50,7 @@
 // statements to access; by default this is thread safe but if you
 // know you are running a single-threaded application then slightly
 // faster performance may be achieved by defining this.
-#define ADEPT_STACK_THREAD_UNSAFE 1
+//#define ADEPT_STACK_THREAD_UNSAFE 1
 
 // Define this to check whether the "multiplier" is zero before it is
 // placed on the operation stack. This makes the forward pass slower
@@ -168,10 +168,15 @@
 #define ADEPT_THREAD_LOCAL __thread
 #define ADEPT_RESTRICT __restrict__
 #else
-#include <windows.h> 
 #define ADEPT_SSE2_ALIGNED
 #define ADEPT_THREAD_LOCAL __declspec(thread)
-#define ADEPT_EXPORT_DLL __declspec(dllexport)
+
+#ifndef __ADEPT_COMPILE_DLL
+#define ADEPT_DLL __declspec(dllimport)
+#else
+#define ADEPT_DLL __declspec(dllexport)
+#endif
+
 #define ADEPT_RESTRICT __restrict
 #endif
 
@@ -194,12 +199,12 @@ namespace adept {
  
   // Declare a thread-safe and a thread-unsafe global pointer to the
   // current stack
-  class ADEPT_EXPORT_DLL Stack;
-  extern ADEPT_THREAD_LOCAL Stack* _stack_current_thread;
-  extern Stack* _stack_current_thread_unsafe;
+  class ADEPT_DLL Stack;
+  extern ADEPT_DLL Stack* _stack_current_thread;
+  extern ADEPT_DLL Stack* _stack_current_thread_unsafe;
 
-  // Define ADEPT_ACTIVE_STACK to be the currently active version
-  // regardless of whether we are in thread safe or unsafe mode
+// Define ADEPT_ACTIVE_STACK to be the currently active version
+// regardless of whether we are in thread safe or unsafe mode
 #ifdef ADEPT_STACK_THREAD_UNSAFE
 #define ADEPT_ACTIVE_STACK adept::_stack_current_thread_unsafe
 #else
@@ -211,7 +216,7 @@ namespace adept {
   // gradient list, and "end_plus_one" would be one plus the location
   // of the final operation (multiplier-derivative pair) on the RHS,
   // in this case y dz.
-  struct ADEPT_EXPORT_DLL Statement {
+  struct ADEPT_DLL Statement {
     Statement() { }
     Statement(Offset offset_, Offset end_plus_one_)
       : offset(offset_), end_plus_one(end_plus_one_) { }
@@ -221,8 +226,8 @@ namespace adept {
 
   // Structure holding a fixed-size array of objects (intended for
   // double or float)
-  template <int Size, class ADEPT_EXPORT_DLL Type>
-  struct ADEPT_EXPORT_DLL Block {
+  template <int Size, class Type>
+  struct Block {
     Block() { zero(); }
     const Type& operator[](Offset i) const { return data[i]; }
     Type& operator[](Offset i) { return data[i]; }
@@ -231,7 +236,7 @@ namespace adept {
   };
 
   // Structure for describing a gap in the current list of gradients
-  struct ADEPT_EXPORT_DLL Gap {
+  struct ADEPT_DLL Gap {
     Gap(Offset value) : start(value), end(value) {}
     Gap(Offset start_, Offset end_) : start(start_), end(end_) {}
     Offset start;
@@ -246,7 +251,7 @@ namespace adept {
   // the adept::autodiff_exception type, and all implement the
   // "what()" function to return an error message. First we define the
   // autodiff_exception type:
-  class ADEPT_EXPORT_DLL autodiff_exception : public std::exception {
+  class ADEPT_DLL autodiff_exception : public std::exception {
   public:
     virtual const char* what() const throw() {
       return message_;
@@ -256,49 +261,49 @@ namespace adept {
   };
 
   // Now we define the various specific exceptions that can be thrown.
-  class ADEPT_EXPORT_DLL gradient_out_of_range : public autodiff_exception {
+  class ADEPT_DLL gradient_out_of_range : public autodiff_exception {
   public:
     gradient_out_of_range(const char* message 
 			  = "Gradient index out of range: probably aReal objects have been created after a set_gradient(s) call")
     { message_ = message; }
   };
 
-  class ADEPT_EXPORT_DLL gradients_not_initialized : public autodiff_exception {
+  class ADEPT_DLL gradients_not_initialized : public autodiff_exception {
   public:
     gradients_not_initialized(const char* message 
 			      = "Gradients not initialized: at least one call to set_gradient(s) is needed before a forward or reverse pass")
     { message_ = message; }
   };
 
-  class ADEPT_EXPORT_DLL stack_already_active : public autodiff_exception {
+  class ADEPT_DLL stack_already_active : public autodiff_exception {
   public:
     stack_already_active(const char* message 
 			 = "Attempt to activate an adept::Stack when one is already active in this thread")
     { message_ = message; }
   };
 
-  class ADEPT_EXPORT_DLL dependents_or_independents_not_identified : public autodiff_exception {
+  class ADEPT_DLL dependents_or_independents_not_identified : public autodiff_exception {
   public:
     dependents_or_independents_not_identified(const char* message 
 		 = "Dependent or independent variables not identified before a Jacobian computation")
     { message_ = message; }
   };
 
-  class ADEPT_EXPORT_DLL wrong_gradient : public autodiff_exception {
+  class ADEPT_DLL wrong_gradient : public autodiff_exception {
   public:
     wrong_gradient(const char* message
 		   = "Wrong gradient: append_derivative_dependence called on a different aReal object from the most recent add_derivative_dependence call")
     { message_ = message; }
   };
 
-  class ADEPT_EXPORT_DLL non_finite_gradient : public autodiff_exception {
+  class ADEPT_DLL non_finite_gradient : public autodiff_exception {
   public:
     non_finite_gradient(const char* message
 			= "A non-finite gradient has been computed")
     { message_ = message; }
   };
 
-  class ADEPT_EXPORT_DLL feature_not_available : public autodiff_exception {
+  class ADEPT_DLL feature_not_available : public autodiff_exception {
   public:
     feature_not_available(const char* message = "Feature not available")
     { message_ = message; }
@@ -310,13 +315,13 @@ namespace adept {
   // SECTION 6: Definition of Stack class
   // ---------------------------------------------------------------------
 
-  // class ADEPT_EXPORT_DLL containing derivative information of an algorithm, from which
+  // class ADEPT_DLL containing derivative information of an algorithm, from which
   // the Jacobian matrix can be constructed, as well as tangent-linear
   // and adjoint operations being carried out for suitable input
   // derivatives.  Member functions not defined here are in
   // stack.cpp
 
-  class ADEPT_EXPORT_DLL Stack {
+  class ADEPT_DLL Stack {
   public:
     typedef std::list<Gap> GapList;
     typedef std::list<Gap>::iterator GapListIterator;
@@ -324,7 +329,7 @@ namespace adept {
 
     // Only one constructor, which is normally called with no
     // arguments, but if "false" is provided as the argument it will
-    // construct ADEPT_EXPORT_DLL as normal but not attempt to make itself the active stack
+    // construct ADEPT_DLL as normal but not attempt to make itself the active stack
     Stack(bool activate_immediately = true) :
 #ifndef ADEPT_STACK_STORAGE_STL
       statement_(0), gradient_(0),
@@ -499,7 +504,7 @@ namespace adept {
       else { // Gradient to be unregistered not at top of stack
 	// In the less common situation that the gradient is not at
 	// the top of the stack, the task of unregistering is a bit
-	// more involved, so we carry it out in a non-inline ADEPT_EXPORT_DLL function
+	// more involved, so we carry it out in a non-inline function
 	// to avoid code bloat
 	unregister_gradient_not_top(gradient_offset);
       }
@@ -875,14 +880,14 @@ private:
   //#define ADEPT_VALUE_RETURN_TYPE const Real&
 #define ADEPT_VALUE_RETURN_TYPE Real
 
-  class ADEPT_EXPORT_DLL aReal;
+  class ADEPT_DLL aReal;
 
   // The Expression type from which all other types of expression
   // derive. Each member function simply calls the specialized version
   // of the function according to the expression's true type, which is
   // given by its template argument.
   template <class A>
-  struct ADEPT_EXPORT_DLL Expression {
+  struct Expression {
     // This indicates what type the expression resolves to, and allows
     // for future versions where there may be an underlying active
     // complex or single-precision type instead of double
@@ -928,7 +933,7 @@ private:
 
   // Add: an expression plus another expression
   template <class A, class B>
-  struct ADEPT_EXPORT_DLL Add : public Expression<Add<A,B> > {
+  struct Add : public Expression<Add<A,B> > {
     Add(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()) { }
     // If f(a,b) = a + b, df/da = 1 and likewise for df/db so simply
@@ -953,7 +958,7 @@ private:
   // Overload the addition operator for Expression arguments to return
   // an Add type
   template <class A, class B>
-  inline ADEPT_EXPORT_DLL
+  inline
   Add<A,B> operator+(const Expression<A>& a,
 		     const Expression<B>& b) {
     return Add<A,B>(a.cast(),b.cast());
@@ -961,7 +966,7 @@ private:
 
   // Subtract: an expression minus another expression
   template <class A, class B>
-  struct ADEPT_EXPORT_DLL Subtract : public Expression<Subtract<A,B> > {
+  struct Subtract : public Expression<Subtract<A,B> > {
     Subtract(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()) { }
     // If f(a,b) = a - b, df/da = 1 and df/db = -1
@@ -983,7 +988,7 @@ private:
 
   // Overload subtraction operator for Expression arguments
   template <class A, class B>
-  inline ADEPT_EXPORT_DLL
+  inline
   Subtract<A,B> operator-(const Expression<A>& a,
 			  const Expression<B>& b) {
     return Subtract<A,B>(a.cast(),b.cast());
@@ -994,7 +999,7 @@ private:
   // The first version precomputes the result, which should be optimal
   // if value() is called multiple times
   template <class A, class B>
-  struct ADEPT_EXPORT_DLL Multiply : public Expression<Multiply<A,B> > {
+  struct Multiply : public Expression<Multiply<A,B> > {
     Multiply(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()), result_(a_.value()*b_.value()) { }
     // If f(a,b) = a*b then df/da = b and df/db = a
@@ -1017,7 +1022,7 @@ private:
 #else
   // The second version does not precompute the result
   template <class A, class B>
-  struct ADEPT_EXPORT_DLL Multiply : public Expression<Multiply<A,B> > {
+  struct Multiply : public Expression<Multiply<A,B> > {
     Multiply(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()) { }
     // If f(a,b) = a*b then df/da = b and df/db = a
@@ -1040,7 +1045,7 @@ private:
 
   // Overload multiplication operator for Expression arguments
   template <class A, class B>
-  inline ADEPT_EXPORT_DLL
+  inline
   Multiply<A,B> operator*(const Expression<A>& a,
 			  const Expression<B>& b) {
     return Multiply<A,B>(a.cast(),b.cast());
@@ -1048,7 +1053,7 @@ private:
 
   // Divide: an expression divided by another expression
   template <class A, class B>
-  struct ADEPT_EXPORT_DLL Divide : public Expression<Divide<A,B> > {
+  struct Divide : public Expression<Divide<A,B> > {
     Divide(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()), one_over_b_(1.0/b_.value()),
 	result_(a_.value()*one_over_b_) { }
@@ -1074,7 +1079,7 @@ private:
   
   // Overload division operator for Expression arguments
   template <class A, class B>
-  inline ADEPT_EXPORT_DLL
+  inline
   Divide<A,B> operator/(const Expression<A>& a,
 			const Expression<B>& b) {
     return Divide<A,B>(a.cast(),b.cast());
@@ -1082,7 +1087,7 @@ private:
 
   // ScalarAdd: an expression plus a scalar
   template <class A>
-  struct ADEPT_EXPORT_DLL ScalarAdd : public Expression<ScalarAdd<A> > {
+  struct ScalarAdd : public Expression<ScalarAdd<A> > {
     ScalarAdd(const Expression<A>& a, const Real& b)
       : a_(a.cast()), result_(a_.value() + b) { }
     void calc_gradient(Stack& stack) const {
@@ -1102,13 +1107,13 @@ private:
   // Overload addition operator for expression plus scalar and scalar
   // plus expression
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarAdd<A> operator+(const Expression<A>& a,
 			 const Real& b) {
     return ScalarAdd<A>(a.cast(),b);
   }
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarAdd<A> operator+(const Real& b,
 			 const Expression<A>& a) {
     return ScalarAdd<A>(a.cast(),b);
@@ -1117,7 +1122,7 @@ private:
   // Overload subtraction operator for expression minus scalar to
   // return a ScalarAdd object
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarAdd<A> operator-(const Expression<A>& a,
 			 const Real& b) {
     return ScalarAdd<A>(a.cast(),-b);
@@ -1125,7 +1130,7 @@ private:
 
   // ScalarSubtract: scalar minus expression
   template <class B>
-  struct ADEPT_EXPORT_DLL ScalarSubtract : public Expression<ScalarSubtract<B> > {
+  struct ScalarSubtract : public Expression<ScalarSubtract<B> > {
     ScalarSubtract(const Real& a, const Expression<B>& b)
       : b_(b.cast()), result_(a - b_.value()) {}
     void calc_gradient(Stack& stack) const {
@@ -1144,7 +1149,7 @@ private:
 
   // Overload subtraction operator for scalar minus expression
   template <class B>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarSubtract<B> operator-(const Real& a,
 			      const Expression<B>& b) {
     return ScalarSubtract<B>(a, b.cast());
@@ -1152,7 +1157,7 @@ private:
 
   // ScalarMultiply: expression multiplied by scalar
   template <class A>
-  struct ADEPT_EXPORT_DLL ScalarMultiply
+  struct ScalarMultiply
     : public Expression<ScalarMultiply<A> > {
     ScalarMultiply(const Expression<A>& a, const Real& b)
       : a_(a.cast()), b_(b) { }
@@ -1173,13 +1178,13 @@ private:
   // Overload multiplication operator for expression multiplied by
   // scalar and scalar multiplied by expression
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarMultiply<A> operator*(const Expression<A>& a,
 			      const Real& b) {
     return ScalarMultiply<A>(a.cast(),b);
   }
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarMultiply<A> operator*(const Real& b,
 			      const Expression<A>& a) {
     return ScalarMultiply<A>(a.cast(),b);
@@ -1188,7 +1193,7 @@ private:
   // Overload division operator for expression divided by scalar to
   // return ScalarMultiply object
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarMultiply<A> operator/(const Expression<A>& a,
 			      const Real& b) {
     return ScalarMultiply<A>(a.cast(),1.0/b);
@@ -1196,7 +1201,7 @@ private:
 
   // ScalarDivide: scalar divided by expression
   template <class B>
-  struct ADEPT_EXPORT_DLL ScalarDivide : public Expression<ScalarDivide<B> > {
+  struct ScalarDivide : public Expression<ScalarDivide<B> > {
     ScalarDivide(const Real& a, const Expression<B>& b)
       : b_(b.cast()), one_over_b_(1.0/b_.value()), 
 	result_(a * one_over_b_) { }
@@ -1218,7 +1223,7 @@ private:
 
   // Overload division operator for scalar divided by expression
   template <class B>
-  inline ADEPT_EXPORT_DLL
+  inline
   ScalarDivide<B> operator/(const Real& a,
 			    const Expression<B>& b) {
     return ScalarDivide<B>(a,b.cast());
@@ -1229,20 +1234,20 @@ private:
   // function is called to extract the value of the expression
 #define ADEPT_DEFINE_CONDITIONAL(OPERATOR, OP)			\
   template <class A, class B>					\
-  inline ADEPT_EXPORT_DLL							\
+  inline							\
   bool OPERATOR(const Expression<A>& a,				\
 		const Expression<B>& b) {			\
     return a.value() OP b.value();				\
   }								\
 								\
   template <class A>						\
-  inline ADEPT_EXPORT_DLL							\
+  inline							\
   bool OPERATOR(const Expression<A>& a, const Real& b) {	\
     return a.value() OP b;					\
   }								\
   								\
   template <class B>						\
-  inline ADEPT_EXPORT_DLL							\
+  inline							\
   bool OPERATOR(const Real& a, const Expression<B>& b) {	\
     return a OP b.value();					\
   }
@@ -1258,7 +1263,7 @@ private:
   
   // UnaryMinus: negation of expression 
   template <class A>
-  struct ADEPT_EXPORT_DLL UnaryMinus : public Expression<UnaryMinus<A> > {
+  struct UnaryMinus : public Expression<UnaryMinus<A> > {
     UnaryMinus(const Expression<A>& a)
       : a_(a.cast()) { }
     void calc_gradient(Stack& stack) const {
@@ -1276,21 +1281,21 @@ private:
   
   // Overload unary minus of expression
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   UnaryMinus<A> operator-(const Expression<A>& a) {
     return UnaryMinus<A>(a.cast());
   }
 
   // Unary plus: returns the argument
   template <class A>
-  inline ADEPT_EXPORT_DLL
+  inline
   A operator+(const Expression<A>& a) {
     return a;
   }
 
   // Exponential of an expression
   template <class A>
-  struct ADEPT_EXPORT_DLL Exp : public Expression<Exp<A> > {
+  struct Exp : public Expression<Exp<A> > {
     Exp(const Expression<A>& a)
       : a_(a.cast()), result_(exp(a.value())) { }
     // If f(a) = exp(a) then df/da = exp(a)
@@ -1312,13 +1317,13 @@ private:
 
 // It is important to place overloads of mathematical functions in the
 // global namespace.  If exp(Expression) was placed in the adept
-// namespace then the Exp class ADEPT_EXPORT_DLL (which is in the adept namespace would
+// namespace then the Exp class ADEPT_DLL (which is in the adept namespace would
 // not be able to find the std::exp(double) function due to C++ name
 // look-up rules.
 
 // Overload exp for Expression objects
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 adept::Exp<A> exp(const adept::Expression<A>& a) {
   return adept::Exp<A>(a.cast());
 }
@@ -1326,11 +1331,11 @@ adept::Exp<A> exp(const adept::Expression<A>& a) {
 
 // Enable unary mathematical functions when the derivative is most
 // easily written in terms of the argument of the function; note that
-// the class ADEPT_EXPORT_DLL is in the adept name space but the function is not.
+// the class ADEPT_DLL is in the adept name space but the function is not.
 #define ADEPT_DEFINE_UNARY_FUNCTION(OP,FUNC,DERIVATIVE)		\
   namespace adept {						\
     template <class A>						\
-    struct ADEPT_EXPORT_DLL OP : public Expression<OP<A> > {			\
+    struct OP : public Expression<OP<A> > {			\
       OP(const Expression<A>& a)				\
 	: a_(a.cast()), result_(FUNC(a_.value())) { }		\
       void calc_gradient(Stack& stack) const {			\
@@ -1349,7 +1354,7 @@ adept::Exp<A> exp(const adept::Expression<A>& a) {
     };								\
   }								\
   template <class A>						\
-  inline ADEPT_EXPORT_DLL							\
+  inline							\
   adept:: OP<A> FUNC(const adept::Expression<A>& a) {		\
     return adept:: OP<A>(a.cast());				\
   }
@@ -1371,7 +1376,7 @@ ADEPT_DEFINE_UNARY_FUNCTION(Abs,  abs,  (a_.value()>0.0)-(a_.value()<0.0))
 // Need both fabs and abs for C compatibility, so get fabs to return
 // an Abs object
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 adept::Abs<A> fabs(const adept::Expression<A>& a) {
   return adept::Abs<A>(a.cast());
 }
@@ -1380,42 +1385,42 @@ adept::Abs<A> fabs(const adept::Expression<A>& a) {
 // Lots more math function in math.h: erf, bessel functions etc...
 
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 bool
 isinf(const adept::Expression<A>& a) {
   return std::isinf(a.value());
 }
 
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 bool
 isnan(const adept::Expression<A>& a) {
   return std::isnan(a.value());
 }
 
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 bool
 isfinite(const adept::Expression<A>& a) {
   return std::isfinite(a.value());
 }
 
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 bool
 __isinf(const adept::Expression<A>& a) {
   return __isinf(a.value());
 }
 
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 bool
 __isnan(const adept::Expression<A>& a) {
   return __isnan(a.value());
 }
 
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 bool
 __isfinite(const adept::Expression<A>& a) {
   return __isfinite(a.value());
@@ -1427,7 +1432,7 @@ __isfinite(const adept::Expression<A>& a) {
 #define ADEPT_DEFINE_UNARY_FUNCTION2(OP,FUNC,DERIVATIVE)	\
   namespace adept {						\
     template <class A>						\
-    struct ADEPT_EXPORT_DLL OP : public Expression<OP<A> > {			\
+    struct OP : public Expression<OP<A> > {			\
       OP(const Expression<A>& a)				\
 	: a_(a.cast()), result_(FUNC(a.value())) { }		\
       void calc_gradient(Stack& stack) const {			\
@@ -1446,7 +1451,7 @@ __isfinite(const adept::Expression<A>& a) {
     };								\
   }								\
   template <class A>						\
-  inline ADEPT_EXPORT_DLL							\
+  inline							\
   adept:: OP<A> FUNC(const adept::Expression<A>& a) {		\
     return adept:: OP<A>(a.cast());				\
   }
@@ -1462,7 +1467,7 @@ ADEPT_DEFINE_UNARY_FUNCTION2(Sqrt, sqrt, 0.5/result_)
 #define ADEPT_DEFINE_UNARY_FUNCTION3(OP,FUNC,DERIV1, DERIV2)	\
   namespace adept {						\
     template <class A>						\
-    struct ADEPT_EXPORT_DLL OP : public Expression<OP<A> > {			\
+    struct OP : public Expression<OP<A> > {			\
       OP(const Expression<A>& a)				\
 	: a_(a.cast()), result_(FUNC(a_.value())) { }		\
       void calc_gradient(Stack& stack) const {			\
@@ -1483,7 +1488,7 @@ ADEPT_DEFINE_UNARY_FUNCTION2(Sqrt, sqrt, 0.5/result_)
     };								\
   }								\
   template <class A>						\
-  inline ADEPT_EXPORT_DLL							\
+  inline							\
   adept:: OP<A> FUNC(const adept::Expression<A>& a) {		\
     return adept:: OP<A>(a.cast());				\
   }
@@ -1495,8 +1500,8 @@ ADEPT_DEFINE_UNARY_FUNCTION3(Tanh, tanh, Real e=exp(2.0*a_.value()), 4.0*e/((2.0
 
 namespace adept {
   // Pow: an expression to the power of another expression
-  template <class ADEPT_EXPORT_DLL A, class ADEPT_EXPORT_DLL B>
-  struct ADEPT_EXPORT_DLL Pow : public Expression<Pow<A,B> > {
+  template <class ADEPT_DLL A, class ADEPT_DLL B>
+  struct Pow : public Expression<Pow<A,B> > {
     Pow(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()), 
 	result_(pow(a_.value(), b_.value())) { };
@@ -1521,7 +1526,7 @@ namespace adept {
   
   // PowScalarExponent: an expression to the power of a scalar
   template <class A>
-  struct ADEPT_EXPORT_DLL PowScalarExponent : public Expression<PowScalarExponent<A> > {
+  struct PowScalarExponent : public Expression<PowScalarExponent<A> > {
     PowScalarExponent(const Expression<A>& a, const Real& b)
       : a_(a.cast()), b_(b), result_(pow(a_.value(), b)) {}
     void calc_gradient(Stack& stack) const {
@@ -1541,7 +1546,7 @@ namespace adept {
 
   // PowScalarBase: a scalar to the power of an expression
   template <class B>
-  struct ADEPT_EXPORT_DLL PowScalarBase : public Expression<PowScalarBase<B> > {
+  struct PowScalarBase : public Expression<PowScalarBase<B> > {
     PowScalarBase(const Real& a, const Expression<B>& b)
       : a_(a), b_(b.cast()), result_(pow(a_, b_.value())) { }
     void calc_gradient(Stack& stack) const {
@@ -1561,8 +1566,8 @@ namespace adept {
 } // End namespace adept
 
 // Overload pow for Expression arguments
-template <class ADEPT_EXPORT_DLL A, class ADEPT_EXPORT_DLL B>
-inline ADEPT_EXPORT_DLL
+template <class A, class B>
+inline
 adept::Pow<A,B> pow(const adept::Expression<A>& a,
 		    const adept::Expression<B>& b) {
   return adept::Pow<A,B>(a.cast(),b.cast());
@@ -1570,7 +1575,7 @@ adept::Pow<A,B> pow(const adept::Expression<A>& a,
 
 // Overload pow for expression to the power of scalar
 template <class A>
-inline ADEPT_EXPORT_DLL
+inline
 adept::PowScalarExponent<A> pow(const adept::Expression<A>& a, 
 				const adept::Real& b) {
   return adept::PowScalarExponent<A>(a.cast(),b);
@@ -1578,7 +1583,7 @@ adept::PowScalarExponent<A> pow(const adept::Expression<A>& a,
 
 // Overload pow for scalar to the power of an expression
 template <class B>
-inline ADEPT_EXPORT_DLL
+inline
 adept::PowScalarBase<B> pow(const adept::Real& a,
 			    const adept::Expression<B>& b) {
   return adept::PowScalarBase<B>(a, b.cast());
@@ -1599,7 +1604,7 @@ namespace adept {
   // it for each of the classes representing types of expression.
 
   template <class A>
-  struct ADEPT_EXPORT_DLL Traits {
+  struct Traits {
     // This will not compile if the relevant trait is not defined for
     // a particular function, because n_active_variables is
     // intentionally not present
@@ -1607,15 +1612,15 @@ namespace adept {
   
   // aReal is an active variable so n_active_variables is 1
   template <>
-  struct ADEPT_EXPORT_DLL Traits<aReal> {
+  struct Traits<aReal> {
     enum { n_active_variables = 1 }; 
   };
   
   // For an arbitrary binary operation, the number of active variables
   // is the sum of the number of active variables in the two arguments
 #define ADEPT_DEFINE_BINARY_TRAIT(OP)			\
-  template <class ADEPT_EXPORT_DLL A, class ADEPT_EXPORT_DLL B>				\
-  struct ADEPT_EXPORT_DLL Traits<OP<A,B> > {				\
+  template <class A, class B>				\
+  struct Traits<OP<A,B> > {				\
     enum { n_active_variables				\
 	   = Traits<A>::n_active_variables		\
 	   + Traits<B>::n_active_variables };		\
@@ -1632,7 +1637,7 @@ namespace adept {
   // is equal to that for the argument
 #define ADEPT_DEFINE_UNARY_TRAIT(OP)			\
   template <class A>					\
-  struct ADEPT_EXPORT_DLL Traits<OP<A> > {				\
+  struct Traits<OP<A> > {				\
     enum { n_active_variables				\
 	   = Traits<A>::n_active_variables };		\
   };
@@ -1669,7 +1674,7 @@ namespace adept {
   // sometime this will be generalized to floats, complex<double>
   // etc. This inherits from Expression so that it can be used in
   // expressions.
-  class ADEPT_EXPORT_DLL aReal : public Expression<aReal> {
+  class ADEPT_DLL aReal : public Expression<aReal> {
   public:
     // Constructor registers the new aReal object with the currently
     // active stack.  Note that this object is not explicitly
@@ -2018,12 +2023,12 @@ namespace adept {
   // file would not be included), the value function would be defined
   // for double arguments to simply return the argument.
   template <class A>
-  inline ADEPT_EXPORT_DLL Real value(const Expression<A>& x) { return x.value(); }
+  inline Real value(const Expression<A>& x) { return x.value(); }
   
   // A way of setting the initial values of an array of n aReal
   // objects without the expense of placing them on the stack
   template <typename Type>
-  inline ADEPT_EXPORT_DLL
+  inline
   void set_values(aReal* a, Offset n, const Type* data)
   {
     for (Offset i = 0; i < n; i++) {
@@ -2033,7 +2038,7 @@ namespace adept {
 
   // Extract the values of an array of n aReal objects
   template <typename Type>
-  inline ADEPT_EXPORT_DLL
+  inline
   void get_values(const aReal* a, Offset n, Type* data)
   {
     for (Offset i = 0; i < n; i++) {
@@ -2045,7 +2050,7 @@ namespace adept {
   // should be done after the algorithm has called and before the
   // Stack::forward or Stack::reverse functions are called
   template <typename Type>
-  inline ADEPT_EXPORT_DLL
+  inline
   void set_gradients(aReal* a, Offset n, const Type* data)
   {
     for (Offset i = 0; i < n; i++) {
@@ -2056,7 +2061,7 @@ namespace adept {
   // Extract the gradients from an array of aReal objects after the
   // Stack::forward or Stack::reverse functions have been called
   template <typename Type>
-  inline ADEPT_EXPORT_DLL
+  inline
   void get_gradients(const aReal* a, Offset n, Type* data)
   {
     for (Offset i = 0; i < n; i++) {
@@ -2066,7 +2071,7 @@ namespace adept {
   
   // If we send an aReal object to a stream it behaves just like a
   // double
-  inline ADEPT_EXPORT_DLL
+  inline
   std::ostream&
   operator<<(std::ostream& os, const adept::aReal& x)
   {
@@ -2076,24 +2081,24 @@ namespace adept {
   
   // Sending a Stack object to a stream reports information about the
   // stack
-  inline ADEPT_EXPORT_DLL
+  inline
   std::ostream& operator<<(std::ostream& os, const adept::Stack& stack) {
     stack.print_status(os);
     return os;
   }
 
 
-  inline ADEPT_EXPORT_DLL
+  inline
   void preallocate_statements(Offset n) {
     ADEPT_ACTIVE_STACK->preallocate_statements(n);
   }
-  inline ADEPT_EXPORT_DLL
+  inline
   void preallocate_operations(Offset n) {
     ADEPT_ACTIVE_STACK->preallocate_operations(n);
   }
 
   // Returns a pointer to the currently active stack (or 0 if there is none)
-  inline ADEPT_EXPORT_DLL
+  inline
   Stack* active_stack() { return ADEPT_ACTIVE_STACK; }
 
   
@@ -2101,9 +2106,9 @@ namespace adept {
   // (thread unsafe) rather than a thread-local global variable
   // (thread safe)
 #ifdef ADEPT_STACK_THREAD_UNSAFE
-  inline ADEPT_EXPORT_DLL bool is_thread_unsafe() { return true; }
+  inline bool is_thread_unsafe() { return true; }
 #else
-  inline ADEPT_EXPORT_DLL bool is_thread_unsafe() { return false; }
+  inline bool is_thread_unsafe() { return false; }
 #endif 
 
   // Subsequent code should use adept::active_stack() rather than this
