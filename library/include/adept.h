@@ -167,19 +167,29 @@
 #define ADEPT_SSE2_ALIGNED __attribute__ ((aligned (16)))
 #define ADEPT_THREAD_LOCAL __thread
 #define ADEPT_RESTRICT __restrict__
+#define ADEPT_DLL_SPEC
 #else
+
+#ifdef WIN32
 #define ADEPT_SSE2_ALIGNED
 #define ADEPT_THREAD_LOCAL __declspec(thread)
-
-#ifndef __ADEPT_COMPILE_DLL
-#define ADEPT_DLL __declspec(dllimport)
-#else
-#define ADEPT_DLL __declspec(dllexport)
-#endif
-
 #define ADEPT_RESTRICT __restrict
+
+// For the creation of a DLL, import and export markers need to be used
+// on the symbols that are exported.
+#ifndef ADEPT_DLL
+#define ADEPT_DLL_SPEC __declspec(dllimport)
+#else
+#define ADEPT_DLL_SPEC __declspec(dllexport)
 #endif
 
+// Make sure that for DLL compilation the thread unsafe path is chosen
+#ifndef ADEPT_STACK_THREAD_UNSAFE
+#define ADEPT_STACK_THREAD_UNSAFE 1
+#endif
+
+#endif // WIN32 section
+#endif // Else-branch of __GNUC__ section
 
 namespace adept {
 
@@ -199,9 +209,15 @@ namespace adept {
  
   // Declare a thread-safe and a thread-unsafe global pointer to the
   // current stack
-  class ADEPT_DLL Stack;
-  extern ADEPT_DLL Stack* _stack_current_thread;
-  extern ADEPT_DLL Stack* _stack_current_thread_unsafe;
+  class ADEPT_DLL_SPEC Stack;
+  
+#ifdef WIN32
+  extern ADEPT_DLL_SPEC Stack* _stack_current_thread;
+  extern ADEPT_DLL_SPEC Stack* _stack_current_thread_unsafe;
+#else
+  extern ADEPT_THREAD_LOCAL Stack* _stack_current_thread;
+  extern Stack* _stack_current_thread_unsafe;
+#endif
 
 // Define ADEPT_ACTIVE_STACK to be the currently active version
 // regardless of whether we are in thread safe or unsafe mode
@@ -216,7 +232,7 @@ namespace adept {
   // gradient list, and "end_plus_one" would be one plus the location
   // of the final operation (multiplier-derivative pair) on the RHS,
   // in this case y dz.
-  struct ADEPT_DLL Statement {
+  struct ADEPT_DLL_SPEC Statement {
     Statement() { }
     Statement(Offset offset_, Offset end_plus_one_)
       : offset(offset_), end_plus_one(end_plus_one_) { }
@@ -236,7 +252,7 @@ namespace adept {
   };
 
   // Structure for describing a gap in the current list of gradients
-  struct ADEPT_DLL Gap {
+  struct ADEPT_DLL_SPEC Gap {
     Gap(Offset value) : start(value), end(value) {}
     Gap(Offset start_, Offset end_) : start(start_), end(end_) {}
     Offset start;
@@ -251,7 +267,7 @@ namespace adept {
   // the adept::autodiff_exception type, and all implement the
   // "what()" function to return an error message. First we define the
   // autodiff_exception type:
-  class ADEPT_DLL autodiff_exception : public std::exception {
+  class ADEPT_DLL_SPEC autodiff_exception : public std::exception {
   public:
     virtual const char* what() const throw() {
       return message_;
@@ -261,49 +277,49 @@ namespace adept {
   };
 
   // Now we define the various specific exceptions that can be thrown.
-  class ADEPT_DLL gradient_out_of_range : public autodiff_exception {
+  class ADEPT_DLL_SPEC gradient_out_of_range : public autodiff_exception {
   public:
     gradient_out_of_range(const char* message 
 			  = "Gradient index out of range: probably aReal objects have been created after a set_gradient(s) call")
     { message_ = message; }
   };
 
-  class ADEPT_DLL gradients_not_initialized : public autodiff_exception {
+  class ADEPT_DLL_SPEC gradients_not_initialized : public autodiff_exception {
   public:
     gradients_not_initialized(const char* message 
 			      = "Gradients not initialized: at least one call to set_gradient(s) is needed before a forward or reverse pass")
     { message_ = message; }
   };
 
-  class ADEPT_DLL stack_already_active : public autodiff_exception {
+  class ADEPT_DLL_SPEC stack_already_active : public autodiff_exception {
   public:
     stack_already_active(const char* message 
 			 = "Attempt to activate an adept::Stack when one is already active in this thread")
     { message_ = message; }
   };
 
-  class ADEPT_DLL dependents_or_independents_not_identified : public autodiff_exception {
+  class ADEPT_DLL_SPEC dependents_or_independents_not_identified : public autodiff_exception {
   public:
     dependents_or_independents_not_identified(const char* message 
 		 = "Dependent or independent variables not identified before a Jacobian computation")
     { message_ = message; }
   };
 
-  class ADEPT_DLL wrong_gradient : public autodiff_exception {
+  class ADEPT_DLL_SPEC wrong_gradient : public autodiff_exception {
   public:
     wrong_gradient(const char* message
 		   = "Wrong gradient: append_derivative_dependence called on a different aReal object from the most recent add_derivative_dependence call")
     { message_ = message; }
   };
 
-  class ADEPT_DLL non_finite_gradient : public autodiff_exception {
+  class ADEPT_DLL_SPEC non_finite_gradient : public autodiff_exception {
   public:
     non_finite_gradient(const char* message
 			= "A non-finite gradient has been computed")
     { message_ = message; }
   };
 
-  class ADEPT_DLL feature_not_available : public autodiff_exception {
+  class ADEPT_DLL_SPEC feature_not_available : public autodiff_exception {
   public:
     feature_not_available(const char* message = "Feature not available")
     { message_ = message; }
@@ -315,13 +331,13 @@ namespace adept {
   // SECTION 6: Definition of Stack class
   // ---------------------------------------------------------------------
 
-  // class ADEPT_DLL containing derivative information of an algorithm, from which
+  // class ADEPT_DLL_SPEC containing derivative information of an algorithm, from which
   // the Jacobian matrix can be constructed, as well as tangent-linear
   // and adjoint operations being carried out for suitable input
   // derivatives.  Member functions not defined here are in
   // stack.cpp
 
-  class ADEPT_DLL Stack {
+  class ADEPT_DLL_SPEC Stack {
   public:
     typedef std::list<Gap> GapList;
     typedef std::list<Gap>::iterator GapListIterator;
@@ -329,7 +345,7 @@ namespace adept {
 
     // Only one constructor, which is normally called with no
     // arguments, but if "false" is provided as the argument it will
-    // construct ADEPT_DLL as normal but not attempt to make itself the active stack
+    // construct ADEPT_DLL_SPEC as normal but not attempt to make itself the active stack
     Stack(bool activate_immediately = true) :
 #ifndef ADEPT_STACK_STORAGE_STL
       statement_(0), gradient_(0),
@@ -880,7 +896,7 @@ private:
   //#define ADEPT_VALUE_RETURN_TYPE const Real&
 #define ADEPT_VALUE_RETURN_TYPE Real
 
-  class ADEPT_DLL aReal;
+  class ADEPT_DLL_SPEC aReal;
 
   // The Expression type from which all other types of expression
   // derive. Each member function simply calls the specialized version
@@ -1317,7 +1333,7 @@ private:
 
 // It is important to place overloads of mathematical functions in the
 // global namespace.  If exp(Expression) was placed in the adept
-// namespace then the Exp class ADEPT_DLL (which is in the adept namespace would
+// namespace then the Exp class ADEPT_DLL_SPEC (which is in the adept namespace would
 // not be able to find the std::exp(double) function due to C++ name
 // look-up rules.
 
@@ -1331,7 +1347,7 @@ adept::Exp<A> exp(const adept::Expression<A>& a) {
 
 // Enable unary mathematical functions when the derivative is most
 // easily written in terms of the argument of the function; note that
-// the class ADEPT_DLL is in the adept name space but the function is not.
+// the class ADEPT_DLL_SPEC is in the adept name space but the function is not.
 #define ADEPT_DEFINE_UNARY_FUNCTION(OP,FUNC,DERIVATIVE)		\
   namespace adept {						\
     template <class A>						\
@@ -1500,7 +1516,7 @@ ADEPT_DEFINE_UNARY_FUNCTION3(Tanh, tanh, Real e=exp(2.0*a_.value()), 4.0*e/((2.0
 
 namespace adept {
   // Pow: an expression to the power of another expression
-  template <class ADEPT_DLL A, class ADEPT_DLL B>
+  template <class ADEPT_DLL_SPEC A, class ADEPT_DLL_SPEC B>
   struct Pow : public Expression<Pow<A,B> > {
     Pow(const Expression<A>& a, const Expression<B>& b)
       : a_(a.cast()), b_(b.cast()), 
@@ -1674,7 +1690,7 @@ namespace adept {
   // sometime this will be generalized to floats, complex<double>
   // etc. This inherits from Expression so that it can be used in
   // expressions.
-  class ADEPT_DLL aReal : public Expression<aReal> {
+  class ADEPT_DLL_SPEC aReal : public Expression<aReal> {
   public:
     // Constructor registers the new aReal object with the currently
     // active stack.  Note that this object is not explicitly
