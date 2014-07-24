@@ -4,7 +4,7 @@ project ( Adept )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-if ( NOT ${INSTALL_LIB_DIR} )
+if ( NOT INSTALL_LIB_DIR )
     set ( INSTALL_LIB_DIR "lib" )
 endif()
 
