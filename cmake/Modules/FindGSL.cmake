@@ -1,5 +1,4 @@
-# Script found on KDE-edu list
-# TODO replace this with OpenCog SIAI copyrighted version.
+# File taken from  the Mantid third-party repository
 # 
 # Look for the header file
 # Try to find gnu scientific library GSL
