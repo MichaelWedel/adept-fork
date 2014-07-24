@@ -15,4 +15,4 @@ include_directories ( ${CMAKE_SOURCE_DIR}/library/include )
 add_subdirectory ( library )
 
 # Building the tests supplied with the adept library
-add_subdirectory( test )
+add_subdirectory( test EXCLUDE_FROM_ALL )

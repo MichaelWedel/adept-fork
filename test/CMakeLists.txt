@@ -14,6 +14,7 @@ set ( SRC_FILES
 # Test program 1
 add_executable ( test_adept algorithm.cpp test_adept.cpp )
 target_link_libraries ( test_adept ${LIBS} )
+add_test ( test_program_1 test_adept )
 
 # Test program 3
 add_executable ( test_radiances test_radiances.cpp simulate_radiances.cpp )
@@ -29,3 +30,6 @@ if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
 	add_executable ( test_gsl_interface rosenbrock_banana_function.cpp state.cpp test_gsl_interface.cpp )
 	target_link_libraries ( test_gsl_interface ${LIBS} )
 endif()
+
+add_custom_target ( tests )
+add_dependencies ( tests test_adept test_radiances test_gsl_interface )
