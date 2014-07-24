@@ -13,4 +13,4 @@ ELSE()
     install ( FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/Findadept.cmake DESTINATION  share/adept/cmake/Modules )
 ENDIF()
 
-install ( TARGETS adept DESTINATION lib )
+install ( TARGETS adept DESTINATION ${CMAKE_INSTALL_LIBDIR} )
