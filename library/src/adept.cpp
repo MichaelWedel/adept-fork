@@ -236,6 +236,7 @@ namespace adept {
     Offset i_independent = 0; // Index of first column in the block we
 			      // are currently computing
     // Loop over blocks of ADEPT_MULTIPASS_SIZE columns
+    Block<ADEPT_MULTIPASS_SIZE,Real> a;
     for (Offset iblock = 0; iblock < n_block; iblock++) {
       // Set the initial gradients all to zero
       zero_gradient_multipass();
@@ -248,8 +249,8 @@ namespace adept {
 	const Statement& statement = statement_[ist];
 	// We copy the LHS to "a" in case it appears on the RHS in any
 	// of the following statements
-	Block<ADEPT_MULTIPASS_SIZE,Real> a; // Initialized to zero
-					    // automatically
+     // Initialized to zero
+    a.zero(); // automatically
 	// Loop through operations
 	for (Offset iop = statement_[ist-1].end_plus_one;
 	     iop < statement.end_plus_one; iop++) {
@@ -283,7 +284,7 @@ namespace adept {
       }
       for (Offset ist = 1; ist < n_statements_; ist++) {
 	const Statement& statement = statement_[ist];
-	Block<ADEPT_MULTIPASS_SIZE,Real> a;
+    a.zero();
 	for (Offset iop = statement_[ist-1].end_plus_one;
 	     iop < statement.end_plus_one; iop++) {
 	  for (Offset i = 0; i < n_extra; i++) {
