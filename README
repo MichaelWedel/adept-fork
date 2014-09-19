@@ -1,3 +1,45 @@
+NOTE:
+    This is a fork of adept, with a CMake based build system that
+    creates a shared library. To build the library outside the
+    source directory, type this:
+
+        cmake -DCMAKE_BUILD_TYPE=Release --build ../build
+        cd ../build
+        make
+        make install
+
+    Installing to system directories may require superuser privileges.
+    The installation prefix can be changed in the cmake step, like this:
+
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INSTALL_PREFIX=/usr/local --build ../build
+
+    A find module for CMake is located in PREFIX/share/adept/cmake/Modules,
+    so other CMake-based projects may locate the library with
+
+        find_package ( adept )
+
+    For more information, check the Findadept.cmake file. Three of the
+    tests may be compiled with
+
+        make tests
+
+    but the comparison and benchmark tests are not included.
+
+    The fork was created by Michael Wedel (michael.wedel@psi.ch),
+    for easier integration into the Mantid package (http://mantidproject.org).
+
+    Because of Windows limitations, the thread safe build is disabled.
+    You may re-enable it on Linux-based systems by changing the corresponding
+    flag in library/CMakeLists.txt.
+
+
+Please note that the cmake-bases system makes the INSTALLING-section
+of the original README obsolete.
+
+Original README:
+
+
 Adept: Automatic Differentiation using Expression Templates
 Version: 1.0, September 2013
 By Robin Hogan <r.j.hogan@reading.ac.uk>
@@ -52,42 +94,6 @@ test Adept against hand-coded adjoints.
 To install the include file and static library into
 /usr/local/include/adept.h and /usr/local/lib/libadept.a, type "make
 install" as superuser. Type "make uninstall" to delete them again.
-
-NOTE:
-    This is a fork of adept, with a CMake based build system that
-    creates a shared library. To build the library outside the
-    source directory, type this:
-
-        cmake -DCMAKE_BUILD_TYPE=Release --build ../build
-        cd ../build
-        make
-        make install
-
-    Installing to system directories may require superuser privileges.
-    The installation prefix can be changed in the cmake step, like this:
-        
-        cmake -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_INSTALL_PREFIX=/usr/local --build ../build
-
-    A find module for CMake is located in PREFIX/share/adept/cmake/Modules,
-    so other CMake-based projects may locate the library with
-
-        find_package ( adept )
-
-    For more information, check the Findadept.cmake file. Three of the
-    tests may be compiled with
-
-        make tests
-
-    but the comparison and benchmark tests are not included.
-
-    The fork was created by Michael Wedel (michael.wedel@psi.ch),
-    for integration into the Mantid package (http://mantidproject.org).
-
-    Because of Windows limitations, the thread safe build is disabled.
-    You may re-enable it on Linux-based systems by changing the corresponding
-    flag in library/CMakeLists.txt.
-
 
 DOCUMENTATION
 
