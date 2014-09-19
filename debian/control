@@ -1,0 +1,28 @@
+Source: adept
+Priority: extra
+Maintainer: Michael Wedel <Michael.Wedel@psi.ch>
+Build-Depends: debhelper (>= 8.0.0), cmake (>= 2.8.5)
+Standards-Version: 3.9.4
+Section: libs
+Homepage: http://www.met.rdg.ac.uk/clouds/adept/
+
+Package: adept-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends}, adept (= ${binary:Version})
+Description: Development files of the adept library
+ The package contains the adept header files necessary for developing
+ applications using this library.
+
+Package: adept
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Automatic differentiation library
+ adept is a library that implements automatic differentiation
+ using the operator overloading approach. It is written in C++.
+ More information can be found on the project website: 
+ http://www.met.rdg.ac.uk/clouds/adept/
+ .
+ This packaging script was written for a CMake-based fork,
+ which can be found here:
+ https://github.com/MichaelWedel/adept

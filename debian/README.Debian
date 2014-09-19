@@ -1,0 +1,7 @@
+adept for Debian
+----------------
+
+This package contains a modified version of adept-1.0, with a CMake
+based build system set to build a shared library.
+
+ -- Michael Wedel <Michael.Wedel@psi.ch>  Thu, 10 Jul 2014 10:16:41 +0200
