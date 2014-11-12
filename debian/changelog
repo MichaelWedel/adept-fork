@@ -1,3 +1,9 @@
+adept (1.0.0-0ppa1~trusty1) trusty; urgency=low
+
+  * Update package versioning to PPA style
+
+ -- Martyn Gigg <martyn.gigg@gmail.com>  Wed, 12 Nov 2014 16:10:22 +0000
+
 adept (1.0-cmake-1-0ubuntu1) saucy; urgency=low
 
   * Initial release
