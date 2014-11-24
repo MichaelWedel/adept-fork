@@ -6,7 +6,7 @@ Standards-Version: 3.9.4
 Section: libs
 Homepage: http://www.met.rdg.ac.uk/clouds/adept/
 
-Package: adept-dev
+Package: libadept1-dev
 Section: libdevel
 Architecture: any
 Depends: ${misc:Depends}, adept (= ${binary:Version})
@@ -14,7 +14,7 @@ Description: Development files of the adept library
  The package contains the adept header files necessary for developing
  applications using this library.
 
-Package: adept
+Package: libadept1
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Automatic differentiation library
